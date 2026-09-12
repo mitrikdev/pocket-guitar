@@ -1,14 +1,26 @@
-# v0.1 verification
+# Verification
 
-Verified on September 12, 2026.
+Verified on September 12, 2026 after the phone layout and audio update.
 
-- Six automated music tests pass, including 576 combinations of root, structure, and instrument; correct open strings and octave repetition through fret 24; all 13 sliding windows; known note sets; altered interval spellings; and pentatonic degrees.
+## Automated checks
+
+- All 19 tests pass: eight music and fret-window tests, six pitch detection tests, and five playback/metronome tests.
+- Music coverage includes all 576 combinations of root, structure, and instrument; standard tunings; octave repetition through fret 24; Comfort and Overview windows; invalid window inputs; known note sets; altered interval spellings; and pentatonic degrees.
+- Pitch tests cover bass B0 through guitar E6 at 44.1 and 48 kHz, flat and sharp notes, signals with stronger harmonics, silence, quiet input, broadband noise, isolated octave jumps, and stale-reading removal. These are generated signals, not recordings of a physical instrument.
+- Playback and metronome tests verify concert pitch, setting limits, audio-clock beat scheduling, skipping missed beats after a stall without a burst of clicks, and tap-tempo averaging/reset.
 - TypeScript checking and the optimized Next.js static export pass.
-- Browser interaction checks pass: changing instruments preserves A minor pentatonic in Intervals mode; all three string counts render correctly; augmented fifth labels are correct; tapping a nonmember shows its note and relationship; changing the root updates the selected position in place; open-string selection works.
-- Keyboard checks pass: one fretboard Tab stop, arrow navigation within the visible range, Home/End to visible endpoints (including fret 24), Enter to select, and keyboard control of the range slider.
-- Layout checked in Chromium at 956 × 440 and 956 × 360 landscape, 440 × 956 portrait, and 1440 × 900 desktop. No page overflow at those sizes. Portrait displays the rotation prompt.
-- Browser runtime error list is empty. The accessibility audit reports zero violations. Automated contrast analysis cannot resolve some layered note markers; manual color calculations give 13.19:1 for ordinary note labels, 9.10:1 for root labels, and 5.42:1 for secondary labels.
-- Optional WebMCP tools for configuration, position selection, and fret range change the visible app and reject invalid inputs without corrupting state. Selecting an offscreen fret moves it into view.
-- The bottom slider was tested with dragging, Home/End, and single-fret keyboard steps. It preserves instrument/root/structure/mode, retains selected notes while visible, and clears them when they leave view. Upper-neck open tuning labels and the nut/position-marker treatment are correct. The 956 × 360 layout remains within the viewport with the slider visible.
 
-These checks simulate phone viewport sizes in a desktop browser. Physical iPhone touch behavior, Chrome's iOS browser controls, and device safe-area insets still need a real-device check.
+## Browser checks
+
+- Layout checked in Chromium at 956 × 360 and 830 × 320 landscape, 440 × 760 portrait, and 1440 × 900 desktop. No page overflow at these sizes; the bottom slider remains visible with a 44 px control height. Fret cells are 37 px tall at the 360 px landscape height and 65 px tall in portrait.
+- The 830 × 320 short-landscape recheck also kept the metronome Start button fully inside its panel, with no page overflow.
+- Comfort shows seven positions; Overview shows 13. Sliding reaches fret 24. Instrument/root/structure/display settings are preserved; selected notes remain while visible and clear when moved out of view.
+- Instrument changes, nonmember selection, note relationship updates, and open-string selection work. Keyboard navigation includes a single fretboard Tab stop, arrow movement, Home/End, Enter/Space, and range slider controls. Tool dialogs close with Escape and restore focus to their opener.
+- Browser audio observations confirmed E4 at 329.6276 Hz and bass B2 at about 123.47 Hz. The metronome at 120 BPM scheduled clicks 0.5 seconds apart, with 1400 Hz accented clicks and 950 Hz ordinary clicks.
+- A synthetic microphone signal at A440 produced a tuner reading of 440.0 Hz within 0.001 cents. Closing the tuner stopped microphone tracks. Permission denial produced a recoverable error. This check used generated browser input rather than a hardware microphone.
+- Accessibility audits reported zero violations for both the main page and tuner. The main-page rerun with axe 4.12.1 passed 34 checks and left one contrast check incomplete because of layered note markers; a complete automated contrast result is not claimed.
+- Optional WebMCP configuration, position selection, and fret range tools update the visible app and reject invalid inputs without corrupting state. Offscreen selections move into view.
+
+## Device checks still needed
+
+The browser checks simulate viewport sizes on a desktop. The user's physical iPhone still needs a final check for touch comfort, Chrome's actual browser controls and safe-area insets, speaker audibility and timbre, microphone permission flow, and pitch stability with guitar and bass strings. The tuner is intended for one sounding note at a time. Very weak fundamentals, room noise, and microphone processing can affect readings.

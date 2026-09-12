@@ -12,9 +12,11 @@ export const displayNote = (note: string) => note.replace('#', '♯')
 export const MAX_FRET = 24
 export const FRET_WINDOW_SPAN = 12
 
-export function getFretWindow(firstFret: number) {
-  const start = Math.max(0, Math.min(MAX_FRET - FRET_WINDOW_SPAN, Math.round(firstFret)))
-  return { start, end: start + FRET_WINDOW_SPAN, frets: Array.from({ length: FRET_WINDOW_SPAN + 1 }, (_, index) => start + index) }
+export function getFretWindow(firstFret: number, span = FRET_WINDOW_SPAN) {
+  const safeSpan = Number.isFinite(span) ? Math.max(1, Math.min(MAX_FRET, Math.round(span))) : FRET_WINDOW_SPAN
+  const requestedStart = Number.isFinite(firstFret) ? Math.round(firstFret) : 0
+  const start = Math.max(0, Math.min(MAX_FRET - safeSpan, requestedStart))
+  return { start, end: start + safeSpan, frets: Array.from({ length: safeSpan + 1 }, (_, index) => start + index) }
 }
 
 export function fretMarkerCount(fret: number) {

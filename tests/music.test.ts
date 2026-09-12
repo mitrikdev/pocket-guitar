@@ -69,6 +69,36 @@ test('sliding windows keep 13 consecutive positions and correct pitches through 
   assert.deepEqual(Array.from({ length: 25 }, (_, fret) => fret).filter(fret => fretMarkerCount(fret) === 2), [12, 24])
 })
 
+test('compact windows expose seven playable positions and reach the highest fret', () => {
+  assert.deepEqual(getFretWindow(0, 6), { start: 0, end: 6, frets: [0, 1, 2, 3, 4, 5, 6] })
+  assert.deepEqual(getFretWindow(18, 6), { start: 18, end: 24, frets: [18, 19, 20, 21, 22, 23, 24] })
+  assert.deepEqual(getFretWindow(24, 6), getFretWindow(18, 6))
+  assert.deepEqual(getFretWindow(18, 12), getFretWindow(12))
+  assert.deepEqual(getFretWindow(-3, 6), getFretWindow(0, 6))
+  for (const instrument of INSTRUMENTS) {
+    for (const row of generateFretboard(instrument)) {
+      for (let start = 0; start <= 18; start++) {
+        const window = getFretWindow(start, 6)
+        const visible = row.slice(window.start, window.end + 1)
+        assert.deepEqual(visible.map(cell => cell.fret), window.frets)
+        assert.equal(visible[6].midi - visible[0].midi, 6)
+      }
+    }
+  }
+})
+
+test('invalid window inputs cannot produce missing or out-of-neck positions', () => {
+  assert.deepEqual(getFretWindow(Number.NaN, 6), getFretWindow(0, 6))
+  assert.deepEqual(getFretWindow(0, Number.NaN), getFretWindow(0))
+  for (const span of [-5, 0, 6.3, 12, 100, Number.POSITIVE_INFINITY]) {
+    const window = getFretWindow(100, span)
+    assert.ok(window.start >= 0)
+    assert.ok(window.end <= 24)
+    assert.ok(window.frets.length >= 2)
+    assert.equal(window.frets.length, window.end - window.start + 1)
+  }
+})
+
 test('known scales and chords transpose to independently specified pitch sets', () => {
   const cases: [number, string, string[]][] = [
     [0, 'major-scale', ['C', 'D', 'E', 'F', 'G', 'A', 'B']],

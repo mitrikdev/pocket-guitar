@@ -1,17 +1,19 @@
 # Pocket Guitar
 
-A small, client-side fretboard explorer for guitar, four-string bass, and five-string bass. Designed first for an iPhone 16 Pro Max in landscape, with a portrait rotation prompt and the same practice surface on desktop.
+A client-side fretboard explorer for guitar, four-string bass, and five-string bass, with note playback, a metronome, and a chromatic tuner. Designed for an iPhone 16 Pro Max in Chrome, with usable landscape, portrait, and desktop layouts.
+
+Live app: [pocket-guitar.vercel.app](https://pocket-guitar.vercel.app/).
 
 ## Run locally
 
-Requires Node.js 24 or newer.
+Requires Node.js 24.
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Open http://localhost:3000. To use the local preview on a phone, connect both devices to the same network and open the computer's LAN address on port 3000 (the Windows firewall must allow access).
+Open [localhost:3000](http://localhost:3000). To preview the layout on a phone, connect both devices to the same network and open the computer's LAN address on port 3000, with Windows firewall access enabled. Use the published HTTPS app to test the microphone: an ordinary LAN HTTP address does not provide the secure context required for microphone access.
 
 ## Validate and build
 
@@ -21,32 +23,40 @@ npm run typecheck
 npm run build
 ```
 
-Next.js exports static HTML, CSS, and JavaScript to `out/`. No backend, API keys, database, or accounts are part of the application. Hosted preview access may be controlled by the hosting service.
+Next.js exports static HTML, CSS, and JavaScript to `out/`. No backend, API keys, database, or user accounts are required. All music and audio processing runs in the browser.
 
 ## Vercel deployment
 
-Source repository: https://github.com/mitrikdev/pocket-guitar (private).
+The private source repository is [mitrikdev/pocket-guitar](https://github.com/mitrikdev/pocket-guitar). Vercel's GitHub integration deploys pushes to `main` to production and creates preview deployments for other branches.
 
-The project uses the Next.js preset, Node.js 24, `npm ci` to install dependencies, and `npm run build` to produce the static site. No environment variables are required. With Vercel's GitHub integration connected, pushes to `main` update production and other branches receive preview deployments.
-
-Local Vercel project metadata stays in the ignored `.vercel/` directory. Build artifacts and local preview files are excluded from deployment uploads.
+The project uses the Next.js preset, Node.js 24, and `npm run build` to produce the static site. Use `npm ci` for reproducible local installs; Vercel detects npm from the committed lockfile. No environment variables are required. Local Vercel metadata stays in the ignored `.vercel/` directory; build artifacts and local preview files are excluded from uploads.
 
 ## Practice
 
-- Choose an instrument, root, and scale or chord.
-- Switch between note names, musical degrees, and intervals.
-- Use the bottom Fret range slider to move the 13-position view from 0–12 to 12–24. Instrument changes preserve this range. Selected notes remain selected while visible and clear when they leave the view.
-- Tap any position, including unhighlighted positions and open strings, for its note and relationship to the root.
-- Roots are amber and have a small identifying dot. The selected position has an outer ring.
-- With a keyboard, Tab enters the fretboard once. Arrow keys move between visible positions; Home/End move to the first/last visible fret; Enter or Space selects. Tab to the range slider and use arrows or Home/End to move along the neck.
-- Instrument changes preserve the musical selection and clear the selected position. Root and structure changes update its explanation in place.
+- Choose the root and scale or chord in the top bar. Open Settings to change instruments or switch between note names, musical degrees, and intervals.
+- Comfort view shows seven fret positions with larger touch targets. The bottom slider moves from frets 0–6 through 18–24. Choose Overview in Settings to see 13 positions, from 0–12 through 12–24.
+- Tap any position, including unhighlighted positions and open strings, to see its note and relationship to the root and hear its pitch. Use the sound toggle for silent practice.
+- Roots are amber and carry a small identifying dot. The selected position has an outer ring.
+- Instrument changes preserve the musical settings and fret range, and clear the selected position. Moving the range keeps selected notes while they remain visible and clears them when they leave view. Root and structure changes update the selected note's explanation.
+- The phone landscape layout keeps a compact toolbar beside the fretboard and the slider within the visible browser area. Portrait also supports practice. Layout height follows the browser's visible viewport as its controls change size.
+- With a keyboard, Tab enters the fretboard once. Arrow keys move between visible positions; Home/End move to the visible endpoints; Enter or Space selects. The slider supports arrows and Home/End. Escape closes a tool or Settings and restores focus to its opener.
+
+## Sound and practice tools
+
+Note playback uses synthesized guitar and bass plucks through the browser's [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API). These are generated tones rather than recorded instrument samples; there are no sample downloads or external audio services. Playback begins from a user action.
+
+The metronome supports 40–240 BPM, one to seven beats per bar, an accented first beat, and tap tempo. Clicks are scheduled against the audio clock so ordinary interface work does not shift their timing. It runs in the foreground and stops when the page is hidden.
+
+The tuner uses [Pitchy 4.1.0](https://github.com/ianprime0509/pitchy), a lightweight JavaScript pitch detector under the 0BSD license. It is chromatic, uses A4 = 440 Hz, and displays the nearest note, octave, frequency, and signed cents. Play one string at a time and let the initial attack settle; weak signals or background noise may prevent a stable reading. Detection includes the low B0 of a five-string bass.
+
+Opening the tuner pauses the metronome and temporarily mutes note playback. Closing it restores the previous sound setting. Microphone access is requested only after tapping Start tuner. Audio is processed locally without recording, uploading, or storing it. Stopping or closing the tuner, hiding the page, and leaving the app release its microphone tracks and audio context. Browser microphone permission and HTTPS are required; see the [getUserMedia documentation](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia).
 
 ## Musical conventions
 
-`lib/music.ts` keeps tuning and interval data separate from presentation. Tunings are stored low to high and rendered high to low. Note names consistently use sharps; contextual enharmonic spelling is deferred as specified. Degrees and interval names use each structure's musical role. “Minor blues” uses the diminished fifth, and “Diminished” means the diminished triad. Nonmember tritones are labelled “Tritone.”
+`lib/music.ts` keeps tuning and interval data separate from presentation. Tunings are stored low to high and rendered high to low. Note names consistently use sharps; contextual enharmonic spelling is deferred. Degrees and interval names follow each structure's musical role. “Minor blues” uses the diminished fifth, and “Diminished” means the diminished triad. Nonmember tritones are labelled “Tritone.”
 
-Seven scales and nine chords are included. Chord mode shows all chord tones, not playable voicings. There is no persistence, audio, or microphone input.
+Seven scales and nine chords are included. Chord mode shows all chord tones, not playable voicings. Practice settings do not persist between visits.
 
-Progressive-enhancement WebMCP tools expose configuration, position selection, and the fret range slider when supported. They do not affect ordinary browser use.
+Progressive-enhancement WebMCP tools expose configuration, position selection, and fret range changes when supported. They do not affect ordinary browser use or request microphone access.
 
-The original product requirements remain in `guitar-fretboard-learning-tool-v0.1.md`. The user subsequently expanded the range to 24 frets via the bottom slider.
+The original specification remains in `guitar-fretboard-learning-tool-v0.1.md`. Later requests expanded the neck to 24 frets and added phone layout improvements and audio practice tools. See `VERIFICATION.md` for checks and remaining device verification.
