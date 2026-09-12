@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { INSTRUMENTS, NOTE_NAMES, STRUCTURES, activeNotes, generateFretboard, markerLabel, mod12, relationship } from '../lib/music.ts'
+import { INSTRUMENTS, NOTE_NAMES, STRUCTURES, activeNotes, fretMarkerCount, generateFretboard, getFretWindow, markerLabel, mod12, relationship } from '../lib/music.ts'
 
 const getStructure = (id: string) => STRUCTURES.find(item => item.id === id)!
 
@@ -8,7 +8,7 @@ test('standard tunings, string order, and all open/fretted pitches are correct',
   const openMidi = [[64, 59, 55, 50, 45, 40], [43, 38, 33, 28], [43, 38, 33, 28, 23]]
   INSTRUMENTS.forEach((instrument, index) => {
     const board = generateFretboard(instrument)
-    assert.equal(board.flat().length, [78, 52, 65][index])
+    assert.equal(board.flat().length, [150, 100, 125][index])
     board.forEach((row, string) => {
       assert.equal(row[0].midi, openMidi[index][string])
       assert.equal(new Set(row.slice(0, 12).map(cell => cell.pitchClass)).size, 12)
@@ -20,6 +20,8 @@ test('standard tunings, string order, and all open/fretted pitches are correct',
       })
       assert.equal(row[12].pitchClass, row[0].pitchClass)
       assert.equal(row[12].octave, row[0].octave + 1)
+      assert.equal(row[24].pitchClass, row[0].pitchClass)
+      assert.equal(row[24].octave, row[0].octave + 2)
     })
   })
   assert.equal(generateFretboard(INSTRUMENTS[0])[1][5].note, 'E')
@@ -36,13 +38,35 @@ test('every root and structure highlights the complete neck including open and o
       for (const instrument of INSTRUMENTS) {
         for (const row of generateFretboard(instrument)) {
           const lit = row.filter(cell => relationship(cell.pitchClass, root, structure).isMember)
-          assert.equal(lit.length, members.size + Number(members.has(row[0].pitchClass)))
-          assert.equal(row.filter(cell => relationship(cell.pitchClass, root, structure).isRoot).length, 1 + Number(row[0].pitchClass === root))
+          assert.equal(lit.length, 2 * members.size + Number(members.has(row[0].pitchClass)))
+          assert.equal(row.filter(cell => relationship(cell.pitchClass, root, structure).isRoot).length, 2 + Number(row[0].pitchClass === root))
           for (const cell of row) assert.equal(relationship(cell.pitchClass, root, structure).isMember, members.has(cell.pitchClass))
         }
       }
     }
   }
+})
+
+test('sliding windows keep 13 consecutive positions and correct pitches through fret 24', () => {
+  for (const instrument of INSTRUMENTS) {
+    const board = generateFretboard(instrument)
+    for (let firstFret = 0; firstFret <= 12; firstFret++) {
+      const window = getFretWindow(firstFret)
+      assert.equal(window.frets.length, 13)
+      assert.equal(window.frets[0], firstFret)
+      assert.equal(window.frets[12], firstFret + 12)
+      for (const row of board) {
+        const visible = row.slice(window.start, window.end + 1)
+        assert.deepEqual(visible.map(cell => cell.fret), window.frets)
+        assert.equal(visible[12].midi, visible[0].midi + 12)
+        assert.equal(visible[12].pitchClass, visible[0].pitchClass)
+      }
+    }
+  }
+  assert.equal(getFretWindow(-1).start, 0)
+  assert.equal(getFretWindow(24).start, 12)
+  assert.deepEqual(Array.from({ length: 25 }, (_, fret) => fret).filter(fret => fretMarkerCount(fret) === 1), [3, 5, 7, 9, 15, 17, 19, 21])
+  assert.deepEqual(Array.from({ length: 25 }, (_, fret) => fret).filter(fret => fretMarkerCount(fret) === 2), [12, 24])
 })
 
 test('known scales and chords transpose to independently specified pitch sets', () => {

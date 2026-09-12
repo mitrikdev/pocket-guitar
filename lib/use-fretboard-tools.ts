@@ -2,14 +2,15 @@
 
 import { useEffect, useRef } from 'react'
 import { flushSync } from 'react-dom'
-import { INSTRUMENTS, NOTE_NAMES, STRUCTURES, activeNotes, generateFretboard, relationship, type DisplayMode, type InstrumentId } from './music'
+import { INSTRUMENTS, NOTE_NAMES, STRUCTURES, MAX_FRET, FRET_WINDOW_SPAN, activeNotes, generateFretboard, relationship, type DisplayMode, type InstrumentId } from './music'
 
-type State = { instrumentId: InstrumentId; root: number; structureId: string; mode: DisplayMode; selected: { stringIndex: number; fret: number } | null }
+type State = { instrumentId: InstrumentId; root: number; structureId: string; mode: DisplayMode; selected: { stringIndex: number; fret: number } | null; firstFret: number }
 type Actions = {
   setInstrument: (id: InstrumentId) => void
   setRoot: (root: number) => void
   setStructure: (id: string) => void
   setMode: (mode: DisplayMode) => void
+  setRange: (firstFret: number) => void
   setPosition: (position: { stringIndex: number; fret: number }) => void
 }
 type Tool = { name: string; description: string; inputSchema: object; annotations: { readOnlyHint: boolean; untrustedContentHint: boolean }; execute: (input: unknown) => unknown }
@@ -33,7 +34,7 @@ export function useFretboardTools(state: State, actions: Actions) {
     const readState = () => {
       const value = current.current.state
       const selectedStructure = STRUCTURES.find(item => item.id === value.structureId)!
-      return { instrument: value.instrumentId, root: NOTE_NAMES[value.root], structureId: value.structureId, displayMode: value.mode, notes: activeNotes(value.root, selectedStructure).map(item => NOTE_NAMES[item.pitchClass]), selectedPosition: value.selected }
+      return { instrument: value.instrumentId, root: NOTE_NAMES[value.root], structureId: value.structureId, displayMode: value.mode, notes: activeNotes(value.root, selectedStructure).map(item => NOTE_NAMES[item.pitchClass]), selectedPosition: value.selected, visibleFrets: { from: value.firstFret, to: value.firstFret + FRET_WINDOW_SPAN } }
     }
     const tools: Tool[] = [{
       name: 'configure_fretboard',
@@ -57,19 +58,30 @@ export function useFretboardTools(state: State, actions: Actions) {
       },
     }, {
       name: 'select_fretboard_position',
-      description: 'Select a visible string and fret, including open strings, and show its note and musical relationship. String 1 is the highest string.',
-      inputSchema: { type: 'object', properties: { stringNumber: { type: 'integer', minimum: 1, maximum: 6 }, fret: { type: 'integer', minimum: 0, maximum: 12 } }, required: ['stringNumber', 'fret'], additionalProperties: false },
+      description: 'Select a string and fret from 0 through 24, moving the visible range if needed, and show its note and musical relationship. String 1 is the highest string.',
+      inputSchema: { type: 'object', properties: { stringNumber: { type: 'integer', minimum: 1, maximum: 6 }, fret: { type: 'integer', minimum: 0, maximum: MAX_FRET } }, required: ['stringNumber', 'fret'], additionalProperties: false },
       annotations: { readOnlyHint: false, untrustedContentHint: false },
       execute(input) {
         const args = record(input)
         const state = current.current.state
         const instrument = INSTRUMENTS.find(item => item.id === state.instrumentId)!
-        if (!Number.isInteger(args.stringNumber) || !Number.isInteger(args.fret) || Number(args.stringNumber) < 1 || Number(args.stringNumber) > instrument.tuning.length || Number(args.fret) < 0 || Number(args.fret) > 12 || Object.keys(args).some(key => !['stringNumber', 'fret'].includes(key))) throw new Error('Choose an existing string and a fret from 0 through 12.')
+        if (!Number.isInteger(args.stringNumber) || !Number.isInteger(args.fret) || Number(args.stringNumber) < 1 || Number(args.stringNumber) > instrument.tuning.length || Number(args.fret) < 0 || Number(args.fret) > MAX_FRET || Object.keys(args).some(key => !['stringNumber', 'fret'].includes(key))) throw new Error('Choose an existing string and a fret from 0 through 24.')
         const selected = { stringIndex: Number(args.stringNumber) - 1, fret: Number(args.fret) }
         flushSync(() => current.current.actions.setPosition(selected))
         const cell = generateFretboard(instrument)[selected.stringIndex][selected.fret]
         const result = relationship(cell.pitchClass, state.root, STRUCTURES.find(item => item.id === state.structureId)!)
         return { ...readState(), note: cell.note, octave: cell.octave, interval: result.interval.name, isMember: result.isMember }
+      },
+    }, {
+      name: 'set_fretboard_range',
+      description: 'Move the bottom fretboard slider. Show 13 positions starting at firstFret, up to fret 24. Keeps musical settings; clears a selected note only if it leaves the visible range.',
+      inputSchema: { type: 'object', properties: { firstFret: { type: 'integer', minimum: 0, maximum: MAX_FRET - FRET_WINDOW_SPAN } }, required: ['firstFret'], additionalProperties: false },
+      annotations: { readOnlyHint: false, untrustedContentHint: false },
+      execute(input) {
+        const args = record(input)
+        if (!Number.isInteger(args.firstFret) || Number(args.firstFret) < 0 || Number(args.firstFret) > MAX_FRET - FRET_WINDOW_SPAN || Object.keys(args).some(key => key !== 'firstFret')) throw new Error('The first visible fret must be an integer from 0 through 12.')
+        flushSync(() => current.current.actions.setRange(Number(args.firstFret)))
+        return readState()
       },
     }]
     for (const tool of tools) {

@@ -9,6 +9,18 @@ export type Position = Readonly<{ stringIndex: number; stringNumber: number; str
 
 export const mod12 = (value: number) => ((value % 12) + 12) % 12
 export const displayNote = (note: string) => note.replace('#', '♯')
+export const MAX_FRET = 24
+export const FRET_WINDOW_SPAN = 12
+
+export function getFretWindow(firstFret: number) {
+  const start = Math.max(0, Math.min(MAX_FRET - FRET_WINDOW_SPAN, Math.round(firstFret)))
+  return { start, end: start + FRET_WINDOW_SPAN, frets: Array.from({ length: FRET_WINDOW_SPAN + 1 }, (_, index) => start + index) }
+}
+
+export function fretMarkerCount(fret: number) {
+  if (fret > 0 && fret % 12 === 0) return 2
+  return [3, 5, 7, 9].includes(fret % 12) ? 1 : 0
+}
 
 const intervals: readonly Interval[] = [
   { semitones: 0, degree: '1', short: 'R', name: 'Root' },
@@ -59,7 +71,7 @@ export function generateFretboard(instrument: Instrument): Position[][] {
     const openMidi = (string.octave + 1) * 12 + NOTE_NAMES.indexOf(string.note)
     const repeated = instrument.tuning.filter(s => s.note === string.note).length > 1
     const stringName = repeated ? `${stringIndex === 0 ? 'High' : 'Low'} ${string.note}` : string.note
-    return Array.from({ length: 13 }, (_, fret) => {
+    return Array.from({ length: MAX_FRET + 1 }, (_, fret) => {
       const midi = openMidi + fret
       return { stringIndex, stringNumber: stringIndex + 1, stringName, fret, midi, pitchClass: mod12(midi), note: NOTE_NAMES[mod12(midi)], octave: Math.floor(midi / 12) - 1 }
     })
