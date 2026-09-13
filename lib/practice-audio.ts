@@ -50,11 +50,50 @@ export function updateTapTempo(previous: readonly number[], now: number) {
   return { taps, bpm: clampBpm(60000 / interval) }
 }
 
-type Voice = { stop: () => void }
+export type ProgressionChord = { id: string; midis: readonly number[] }
+export type TimedChord = ProgressionChord & { time: number }
+export const STRUM_SECONDS = 0.02
+
+/** Keep actual string pitches, ordered as a down-strum from the lowest note. */
+export function chordNotes(midis: readonly number[]) {
+  if (!midis.length) throw new RangeError('Choose a chord with at least one playable note.')
+  if (midis.some(midi => !Number.isInteger(midi) || midi < 0 || midi > 127)) {
+    throw new RangeError('Chord notes must be whole MIDI notes between 0 and 127.')
+  }
+  const notes = [...new Set(midis)].sort((a, b) => a - b)
+  if (notes.length > 8) throw new RangeError('A chord can play up to eight notes at once.')
+  return notes
+}
+
+/** Four beats per chord, regardless of the metronome's time signature. */
+export function progressionTimeline(chords: readonly ProgressionChord[], bpm: number, startTime: number) {
+  if (!chords.length) throw new RangeError('Add a chord to your progression before playing it.')
+  if (!Number.isFinite(startTime)) throw new RangeError('The playback start time must be finite.')
+  const secondsPerBar = 4 * 60 / clampBpm(bpm)
+  return {
+    chords: chords.map((chord, index) => ({ id: chord.id, midis: chordNotes(chord.midis), time: startTime + index * secondsPerBar })),
+    endTime: startTime + chords.length * secondsPerBar,
+  }
+}
+
+/** A delayed callback advances past missed chords; it never strums a catch-up burst. */
+export function scheduledChords(chords: readonly TimedChord[], index: number, now: number, lookahead = 0.1) {
+  let nextIndex = index
+  const due: TimedChord[] = []
+  while (nextIndex < chords.length && chords[nextIndex].time < now + lookahead) {
+    if (chords[nextIndex].time >= now) due.push(chords[nextIndex])
+    nextIndex++
+  }
+  return { chords: due, nextIndex }
+}
+
+type Voice = { stop: (when?: number) => void }
 type AudioCallbacks = {
   onBeat: (beat: number) => void
   onRunning: (running: boolean) => void
   onError: (message: string) => void
+  onProgressionRunning?: (running: boolean) => void
+  onActiveChord?: (id: string | null) => void
 }
 
 /** One lazy context for note playback and the metronome. No audio is created during rendering. */
@@ -63,6 +102,7 @@ export class PracticeAudio {
   private master: GainNode | null = null
   private compressor: DynamicsCompressorNode | null = null
   private voices = new Map<number, Voice>()
+  private releasingVoices = new Set<Voice>()
   private clicks = new Set<Voice>()
   private timer: ReturnType<typeof setInterval> | null = null
   private animation: number | null = null
@@ -71,6 +111,11 @@ export class PracticeAudio {
   private lastScheduledTime: number | null = null
   private bpm = DEFAULT_BPM
   private beatsPerBar = 4
+  private progressionTimer: ReturnType<typeof setInterval> | null = null
+  private progressionAnimation: number | null = null
+  private progression: ReturnType<typeof progressionTimeline> | null = null
+  private progressionIndex = 0
+  private visualChordIndex = 0
   private destroyed = false
   private callbacks: AudioCallbacks
 
@@ -96,6 +141,7 @@ export class PracticeAudio {
       this.context.onstatechange = () => {
         if (this.context?.state !== 'running') {
           this.stopMetronome()
+          this.stopProgression()
           this.stopNotes()
         }
       }
@@ -107,16 +153,16 @@ export class PracticeAudio {
     })
   }
 
-  playNote(midi: number, instrument: InstrumentId) {
+  playNote(midi: number, instrument: InstrumentId, when?: number) {
     const context = this.context
     if (!context || context.state !== 'running' || !this.master || this.destroyed) return
     const frequency = midiToFrequency(midi)
-    this.voices.get(midi)?.stop()
+    const now = Math.max(context.currentTime, when ?? context.currentTime)
+    this.voices.get(midi)?.stop(now)
     // Eight voices allow a chord to ring while keeping rapid tapping and gain bounded.
-    while (this.voices.size >= 8) this.voices.values().next().value?.stop()
+    while (this.voices.size >= 8) this.voices.values().next().value?.stop(now)
     const isBass = instrument !== 'guitar'
     const duration = isBass ? 2.2 : 1.7
-    const now = context.currentTime
     const envelope = context.createGain()
     envelope.gain.setValueAtTime(1, now)
     envelope.connect(this.master)
@@ -125,6 +171,7 @@ export class PracticeAudio {
     const weights = isBass ? [1, 0.55, 0.3, 0.13, 0.06] : [1, 0.58, 0.32, 0.19, 0.1, 0.055, 0.025]
     const totalWeight = weights.reduce((sum, weight) => sum + weight, 0)
     let cleaned = false
+    let releaseTime: number | null = null
     const cleanup = () => {
       if (cleaned) return
       cleaned = true
@@ -132,15 +179,20 @@ export class PracticeAudio {
       partialGains.forEach(gain => gain.disconnect())
       envelope.disconnect()
       if (this.voices.get(midi) === voice) this.voices.delete(midi)
+      this.releasingVoices.delete(voice)
     }
     const voice: Voice = {
-      stop: () => {
+      stop: (when) => {
         if (cleaned) return
-        this.voices.delete(midi)
-        const release = context.currentTime
+        const release = Math.max(context.currentTime, when ?? context.currentTime)
+        if (releaseTime !== null && release >= releaseTime) return
+        releaseTime = release
+        if (this.voices.get(midi) === voice) this.voices.delete(midi)
+        this.releasingVoices.add(voice)
         envelope.gain.cancelScheduledValues(release)
         envelope.gain.setTargetAtTime(0, release, 0.004)
-        oscillators.forEach(oscillator => { try { oscillator.stop(release + 0.025) } catch { /* Already ended. */ } })
+        const stopAt = release < now ? release : release + 0.025
+        oscillators.forEach(oscillator => { try { oscillator.stop(stopAt) } catch { /* Already ended. */ } })
       },
     }
     weights.forEach((weight, index) => {
@@ -162,13 +214,84 @@ export class PracticeAudio {
       oscillators.push(oscillator)
       partialGains.push(gain)
     })
+    if (!oscillators.length) { cleanup(); return }
     oscillators[0].onended = cleanup
     this.voices.set(midi, voice)
+  }
+
+  playChord(midis: readonly number[], instrument: InstrumentId = 'guitar', when?: number) {
+    const notes = chordNotes(midis)
+    const context = this.context
+    if (!context || context.state !== 'running' || this.destroyed) return
+    const start = Math.max(context.currentTime, when ?? context.currentTime)
+    notes.forEach((midi, index) => this.playNote(midi, instrument, start + index * STRUM_SECONDS))
+  }
+
+  startProgression(chords: readonly ProgressionChord[]) {
+    const context = this.context
+    if (!context || context.state !== 'running' || this.destroyed) return
+    const timeline = progressionTimeline(chords, this.bpm, context.currentTime + 0.04)
+    this.stopMetronome()
+    this.stopProgression()
+    this.progression = timeline
+    this.progressionIndex = 0
+    this.visualChordIndex = 0
+    this.callbacks.onProgressionRunning?.(true)
+    this.progressionTimer = setInterval(() => this.scheduleProgression(), 25)
+    this.scheduleProgression()
+    const draw = () => {
+      if (!this.progression || !this.context) return
+      let latest: TimedChord | undefined
+      while (this.progression.chords[this.visualChordIndex]?.time <= this.context.currentTime) {
+        latest = this.progression.chords[this.visualChordIndex++]
+      }
+      if (latest) this.callbacks.onActiveChord?.(latest.id)
+      if (this.context.currentTime >= this.progression.endTime) {
+        this.stopProgression()
+        return
+      }
+      this.progressionAnimation = requestAnimationFrame(draw)
+    }
+    if (this.progression) this.progressionAnimation = requestAnimationFrame(draw)
+  }
+
+  private scheduleProgression() {
+    const context = this.context
+    if (!context || context.state !== 'running' || !this.progression) {
+      this.stopProgression()
+      return
+    }
+    if (context.currentTime >= this.progression.endTime) {
+      this.stopProgression()
+      return
+    }
+    try {
+      const batch = scheduledChords(this.progression.chords, this.progressionIndex, context.currentTime)
+      batch.chords.forEach(chord => this.playChord(chord.midis, 'guitar', chord.time))
+      this.progressionIndex = batch.nextIndex
+    } catch {
+      this.stopProgression()
+      this.callbacks.onError('The progression paused. Tap Play to try again.')
+    }
+  }
+
+  stopProgression() {
+    if (this.progressionTimer !== null) clearInterval(this.progressionTimer)
+    if (this.progressionAnimation !== null) cancelAnimationFrame(this.progressionAnimation)
+    this.progressionTimer = null
+    this.progressionAnimation = null
+    this.progression = null
+    this.progressionIndex = 0
+    this.visualChordIndex = 0
+    this.stopNotes()
+    this.callbacks.onProgressionRunning?.(false)
+    this.callbacks.onActiveChord?.(null)
   }
 
   setTempo(bpm: number, beatsPerBar: number) {
     const nextBpm = clampBpm(bpm)
     const nextBar = clampBeatsPerBar(beatsPerBar)
+    if (nextBpm !== this.bpm) this.stopProgression()
     const restartBar = this.timer !== null && nextBar !== this.beatsPerBar
     if (this.timer !== null && nextBpm !== this.bpm && this.lastScheduledTime !== null) {
       this.cursor.time = this.lastScheduledTime + 60 / nextBpm
@@ -182,6 +305,7 @@ export class PracticeAudio {
   startMetronome() {
     const context = this.context
     if (!context || context.state !== 'running' || this.destroyed) return
+    this.stopProgression()
     this.stopMetronome()
     this.cursor = { time: context.currentTime + 0.04, beat: 0 }
     this.lastScheduledTime = null
@@ -252,10 +376,12 @@ export class PracticeAudio {
 
   stopNotes() {
     this.voices.forEach(voice => voice.stop())
+    this.releasingVoices.forEach(voice => voice.stop())
     this.voices.clear()
   }
 
   suspend() {
+    this.stopProgression()
     this.stopMetronome()
     this.stopNotes()
     if (this.context?.state === 'running') void this.context.suspend().catch(() => {})
@@ -263,6 +389,7 @@ export class PracticeAudio {
 
   destroy() {
     this.destroyed = true
+    this.stopProgression()
     this.stopMetronome()
     this.stopNotes()
     if (this.context) {

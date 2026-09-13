@@ -1,8 +1,26 @@
 # Verification
 
-Verified on September 12, 2026 after the phone layout and audio update.
+Chord fingerings and the progression maker passed automated and desktop-browser verification on September 12, 2026. The earlier phone layout and audio checks remain recorded below.
 
-## Automated checks
+## Chord fingering and progression update
+
+- Added 248 curated standard-guitar grips across 12 roots and nine chord types, with numbered finger colors, open and muted strings, barres, a fingering selector, and the All tones view. Bass continues to use the chord-tone map.
+- Added progression names, up to 24 chords, a chosen fingering and diagram per card, reordering, removal, fretboard display, and strum preview. Sequence playback is one pass at four beats per chord and the selected tempo.
+- All 41 tests pass: seven chord catalog, eight music and fret-window, six pitch detection, thirteen audio, and seven progression tests. TypeScript checking and the optimized Next.js static export pass.
+- Progression data tests cover order/title/fingering restoration, malformed entries and duplicate IDs, stale fingering repair, unreadable or future storage preservation, the 24-chord limit, immutable reordering, chord edits, and safe additions.
+- The persistence hook delays writes until saved data has loaded. The progression stays in browser storage on this device; there is no cloud sync. Storage errors have visible session-only feedback.
+
+### Browser checks for this update
+
+- Verified the exact open C fingering `x32010`, next-shape and selector changes, the All tones toggle, compact F and B7 fingerings, and switching between bass chord tones and guitar shapes. The range regression check switched from Comfort frets 18–24 to Overview and kept the visible range valid.
+- Built a C–Am–F–G progression, changed its title and the Am card to the A-minor shape at fret 12, reordered cards, and refreshed. The title, order, and chosen fingerings persisted. Show brought the chosen card onto the fretboard; removal updated the progression.
+- Browser audio instrumentation confirmed C's sounding MIDI notes `[48, 52, 55, 60, 64]` with 20 ms between strummed strings. At 120 BPM, sequence playback used four beats per chord and advanced the active card ID. Natural completion, Stop, reordering, closing the panel, and starting the metronome correctly ended progression playback.
+- Main layouts at 956 × 360 and 830 × 320 landscape, 440 × 760 portrait, and 1440 × 900 desktop had no page overflow. All new main-page and tool controls measured at least 44 × 44 px; the fretboard retains a single Tab stop.
+- The progression editor scrolls vertically within its panel, keeps Play and Close accessible in sticky controls, and has no horizontal overflow.
+- Accessibility audits reported zero violations: 34 checks passed on the main page and 29 in the progression editor. Contrast checks remain incomplete for layered graphics, so a complete automated contrast result is not claimed.
+- No browser errors were observed.
+
+## Prior release: automated checks
 
 - All 19 tests pass: eight music and fret-window tests, six pitch detection tests, and five playback/metronome tests.
 - Music coverage includes all 576 combinations of root, structure, and instrument; standard tunings; octave repetition through fret 24; Comfort and Overview windows; invalid window inputs; known note sets; altered interval spellings; and pentatonic degrees.
@@ -10,7 +28,7 @@ Verified on September 12, 2026 after the phone layout and audio update.
 - Playback and metronome tests verify concert pitch, setting limits, audio-clock beat scheduling, skipping missed beats after a stall without a burst of clicks, and tap-tempo averaging/reset.
 - TypeScript checking and the optimized Next.js static export pass.
 
-## Browser checks
+## Prior release: browser checks
 
 - Layout checked in Chromium at 956 × 360 and 830 × 320 landscape, 440 × 760 portrait, and 1440 × 900 desktop. No page overflow at these sizes; the bottom slider remains visible with a 44 px control height. Fret cells are 37 px tall at the 360 px landscape height and 65 px tall in portrait.
 - The 830 × 320 short-landscape recheck also kept the metronome Start button fully inside its panel, with no page overflow.
@@ -23,4 +41,4 @@ Verified on September 12, 2026 after the phone layout and audio update.
 
 ## Device checks still needed
 
-The browser checks simulate viewport sizes on a desktop. The user's physical iPhone still needs a final check for touch comfort, Chrome's actual browser controls and safe-area insets, speaker audibility and timbre, microphone permission flow, and pitch stability with guitar and bass strings. The tuner is intended for one sounding note at a time. Very weak fundamentals, room noise, and microphone processing can affect readings.
+The browser checks simulate viewport sizes on a desktop. The new fingering selector and progression editor still need touch checks on the physical phone, including adding and reordering chords, reading diagrams, and choosing shapes. The user's physical iPhone still needs a final check for touch comfort, Chrome's actual browser controls and safe-area insets, speaker audibility and timbre, microphone permission flow, and pitch stability with guitar and bass strings. The tuner is intended for one sounding note at a time. Very weak fundamentals, room noise, and microphone processing can affect readings.

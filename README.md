@@ -1,6 +1,6 @@
 # Pocket Guitar
 
-A client-side fretboard explorer for guitar, four-string bass, and five-string bass, with note playback, a metronome, and a chromatic tuner. Designed for an iPhone 16 Pro Max in Chrome, with usable landscape, portrait, and desktop layouts.
+A client-side fretboard explorer for guitar, four-string bass, and five-string bass, with guitar chord fingerings, a progression maker, note playback, a metronome, and a chromatic tuner. Designed for an iPhone 16 Pro Max in Chrome, with usable landscape, portrait, and desktop layouts.
 
 Live app: [pocket-guitar.vercel.app](https://pocket-guitar.vercel.app/).
 
@@ -36,10 +36,22 @@ The project uses the Next.js preset, Node.js 24, and `npm run build` to produce 
 - Choose the root and scale or chord in the top bar. Open Settings to change instruments or switch between note names, musical degrees, and intervals.
 - Comfort view shows seven fret positions with larger touch targets. The bottom slider moves from frets 0–6 through 18–24. Choose Overview in Settings to see 13 positions, from 0–12 through 12–24.
 - Tap any position, including unhighlighted positions and open strings, to see its note and relationship to the root and hear its pitch. Use the sound toggle for silent practice.
-- Roots are amber and carry a small identifying dot. The selected position has an outer ring.
-- Instrument changes preserve the musical settings and fret range, and clear the selected position. Moving the range keeps selected notes while they remain visible and clears them when they leave view. Root and structure changes update the selected note's explanation.
+- In scales and the All tones chord view, roots are amber and carry a small identifying dot. The selected position has an outer ring. Guitar fingering view uses finger numbers and colors instead.
+- Instrument changes preserve the musical settings and clear the selected position. Moving the range keeps selected notes while they remain visible and clears them when they leave view. Root and structure changes clear the selected position.
 - The phone landscape layout keeps a compact toolbar beside the fretboard and the slider within the visible browser area. Portrait also supports practice. Layout height follows the browser's visible viewport as its controls change size.
 - With a keyboard, Tab enters the fretboard once. Arrow keys move between visible positions; Home/End move to the visible endpoints; Enter or Space selects. The slider supports arrows and Home/End. Escape closes a tool or Settings and restores focus to its opener.
+
+## Chord fingerings and progressions
+
+Choose a guitar chord to explore common playable fingerings. The catalog contains 248 curated grips across all 12 roots and nine chord types: major, minor, major 7, minor 7, dominant 7, sus2, sus4, diminished, and augmented. Switch between the available shapes or choose All tones to study every occurrence of the chord's notes. Bass and five-string bass keep the chord-tone map; guitar grips are for standard six-string guitar tuning.
+
+Finger numbers and colors identify 1 (index), 2 (middle), 3 (ring), and 4 (little finger). Diagrams also show open strings, muted strings, and barres. The same fingering is highlighted on the fretboard. Strum plays its sounding strings and skips muted strings.
+
+Open Progression to name and build a sequence of up to 24 chords. Add a root and chord type, then choose a fingering on each card. Cards show their diagrams in order; use the arrows to reorder, Remove to delete, Strum to preview, and Show to bring a chord onto the fretboard. You can also add the current guitar fingering from the explorer.
+
+Play progression runs the sequence once, with four beats per chord at the selected tempo. The active card is highlighted. Stop ends playback; changing the sequence or a card's fingering also stops it so the display and audio remain aligned.
+
+The progression title, order, and chosen fingerings save automatically on this device in this browser. There is no account or cloud sync, and clearing browser site data removes the saved progression. If browser storage is unavailable, the app reports that changes remain only in the current session. Unreadable saved data is preserved instead of being silently replaced.
 
 ## Sound and practice tools
 
@@ -55,8 +67,8 @@ Opening the tuner pauses the metronome and temporarily mutes note playback. Clos
 
 `lib/music.ts` keeps tuning and interval data separate from presentation. Tunings are stored low to high and rendered high to low. Note names consistently use sharps; contextual enharmonic spelling is deferred. Degrees and interval names follow each structure's musical role. “Minor blues” uses the diminished fifth, and “Diminished” means the diminished triad. Nonmember tritones are labelled “Tritone.”
 
-Seven scales and nine chords are included. Chord mode shows all chord tones, not playable voicings. Practice settings do not persist between visits.
+Seven scales and nine chord types are included. Guitar chords offer playable fingerings and an All tones view. General explorer and audio settings do not persist between visits; the progression title, chord order, and selected fingerings do.
 
 Progressive-enhancement WebMCP tools expose configuration, position selection, and fret range changes when supported. They do not affect ordinary browser use or request microphone access.
 
-The original specification remains in `guitar-fretboard-learning-tool-v0.1.md`. Later requests expanded the neck to 24 frets and added phone layout improvements and audio practice tools. See `VERIFICATION.md` for checks and remaining device verification.
+The original specification remains in `guitar-fretboard-learning-tool-v0.1.md`. Later requests expanded the neck to 24 frets and added phone layout improvements, audio practice tools, common guitar fingerings, and a progression maker. See `VERIFICATION.md` for checks and remaining device verification.
