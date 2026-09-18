@@ -26,6 +26,7 @@ export function ProgressionPanel({ progression, onShowChord, onPlayChord, onPlay
   const [addQuality, setAddQuality] = useState('major-chord')
   const [tempoDraft, setTempoDraft] = useState<string | null>(null)
   const [announcement, setAnnouncement] = useState('')
+  const [deleteId, setDeleteId] = useState<string | null>(null)
   const full = progression.entries.length >= MAX_PROGRESSION_CHORDS
 
   function commitTempo() {
@@ -42,6 +43,16 @@ export function ProgressionPanel({ progression, onShowChord, onPlayChord, onPlay
   }
 
   return <div className="progression-panel">
+    <div className="progression-library-controls">
+      <label>Saved progressions<select aria-label="Saved progressions" value={progression.activeId} disabled={!progression.hydrated} onChange={event => { edit(() => progression.select(event.target.value)); setDeleteId(null) }}>{progression.progressions.map((item, index) => <option key={item.id} value={item.id}>{index + 1}. {item.title.trim() || 'Untitled progression'}</option>)}</select></label>
+      <button type="button" className="secondary-button" disabled={!progression.hydrated} onClick={() => { edit(progression.create); setDeleteId(null); setAnnouncement('New progression created. Your other progressions are saved.') }}>New</button>
+      <button type="button" className="secondary-button" aria-label="Delete current progression" disabled={!progression.hydrated} onClick={() => setDeleteId(progression.activeId)}>Delete</button>
+    </div>
+    {deleteId === progression.activeId ? <div className="progression-delete-confirm" role="group" aria-label="Confirm progression deletion">
+      <p>Delete “{progression.title.trim() || 'Untitled progression'}”?</p>
+      <button type="button" className="secondary-button" onClick={() => setDeleteId(null)}>Cancel</button>
+      <button type="button" className="secondary-button" onClick={() => { edit(() => progression.remove(deleteId)); setDeleteId(null); setAnnouncement('Progression deleted.') }}>Delete progression</button>
+    </div> : null}
     <div className="progression-header">
       <label className="progression-title-input">Progression name
         <input type="text" maxLength={MAX_PROGRESSION_TITLE} value={progression.title} placeholder="Name your progression" disabled={!progression.hydrated} onChange={event => progression.setTitle(event.target.value)}/>

@@ -47,11 +47,11 @@ Choose a guitar chord to explore common playable fingerings. The catalog contain
 
 Finger numbers and colors identify 1 (index), 2 (middle), 3 (ring), and 4 (little finger). Diagrams also show open strings, muted strings, and barres. The same fingering is highlighted on the fretboard. Strum plays its sounding strings and skips muted strings.
 
-Open Progression to name and build a sequence of up to 24 chords. Add a root and chord type, then choose a fingering on each card. Cards show their diagrams in order; use the arrows to reorder, Remove to delete, Strum to preview, and Show to bring a chord onto the fretboard. You can also add the current guitar fingering from the explorer.
+Open Progression to name and build a sequence of up to 24 chords. Use New to start another progression and Saved progressions to switch between them. Each progression saves automatically as you edit; changing its name renames it in the list. Delete asks for confirmation before removing the current progression. Add a root and chord type, then choose a fingering on each card. Cards show their diagrams in order; use the arrows to reorder, Remove to delete, Strum to preview, and Show to bring a chord onto the fretboard. You can also add the current guitar fingering from the explorer.
 
 Play progression runs the sequence once, with four beats per chord at the selected tempo. The active card is highlighted. Stop ends playback; changing the sequence or a card's fingering also stops it so the display and audio remain aligned.
 
-The progression title, order, and chosen fingerings save automatically on this device in this browser. There is no account or cloud sync, and clearing browser site data removes the saved progression. If browser storage is unavailable, the app reports that changes remain only in the current session. Unreadable saved data is preserved instead of being silently replaced.
+All progression names, chord orders, chosen fingerings, and the last selected progression save automatically on this device in this browser. Your previous single progression is imported automatically. There is no account or cloud sync, and clearing browser site data removes the saved progression. If browser storage is unavailable, the app reports that changes remain only in the current session. Unreadable saved data is preserved instead of being silently replaced.
 
 ## Sound and practice tools
 

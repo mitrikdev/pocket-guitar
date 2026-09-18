@@ -357,3 +357,11 @@ legend { font-size: 12px; color: var(--muted); padding: 0; margin-bottom: 9px; }
 .progression-transport { position: sticky; top: 50px; z-index: 4; background: #1b221c; }
 @media (max-width: 600px) { .progression-dialog .dialog-heading { top: -12px; } .progression-transport { top: 56px; } }
 @media (orientation: landscape) and (max-height: 600px) { .progression-dialog .dialog-heading { top: -10px; } .progression-transport { top: 58px; padding-block: 8px; } }
+
+.progression-library-controls { display: flex; align-items: flex-end; gap: 8px; }
+.progression-library-controls label { flex: 1; }
+.progression-library-controls button { min-height: 44px; padding: 10px 14px; font-size: 13px; }
+.progression-delete-confirm { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px; border: 1px solid #a98054; border-radius: 10px; background: #352d21; }
+.progression-delete-confirm p { flex: 1 1 100%; margin: 0 0 4px; font-size: 13px; overflow-wrap: anywhere; }
+.progression-delete-confirm button { min-height: 44px; font-size: 13px; }
+@media (max-width: 600px) { .progression-library-controls { gap: 6px; } .progression-library-controls button { padding-inline: 10px; } }

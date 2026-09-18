@@ -1,5 +1,12 @@
 # Verification
 
+## Multiple saved progressions — September 18, 2026
+
+- All 50 tests pass, including nine library tests for migration, independent titles/chords/fingerings, active selection, create/delete, valid fallback, and malformed or future storage preservation. TypeScript and the production build pass.
+- Browser checks preserved a legacy progression with its selected barre shape, created a second progression, edited and switched between both, and restored the active choice after refresh. Cancelled and confirmed deletion were checked; switching during playback stopped the sequence.
+- The original v1 save remains untouched. The v2 library saves only after hydration. Storage failures retain session data and show an error.
+- Portrait 440 × 760 and landscape 956 × 360 / 830 × 320 checks found no horizontal overflow; library controls measure at least 44 × 44 px. Accessibility reported zero violations and 30 passed checks, with layered contrast remaining incomplete. No browser errors were observed. Physical iPhone touch verification remains user-side.
+
 Chord fingerings and the progression maker passed automated and desktop-browser verification on September 12, 2026. The earlier phone layout and audio checks remain recorded below.
 
 ## Chord fingering and progression update

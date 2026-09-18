@@ -2,63 +2,95 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  PROGRESSION_STORAGE_KEY, addProgressionChord, emptyProgression, moveProgressionChord,
-  progressionTitle, restoreProgression, updateProgressionChord, type ProgressionPatch,
+  PROGRESSION_STORAGE_KEY, addProgressionChord, moveProgressionChord,
+  progressionTitle, updateProgressionChord, type ProgressionPatch,
 } from './progression'
+import {
+  LIBRARY_STORAGE_KEY, emptyLibrary, restoreLibrary, createProgression,
+  selectProgression, deleteProgression, updateActiveProgression,
+  type SavedProgression,
+} from './progression-library'
+
+function newId(prefix: string) {
+  return globalThis.crypto?.randomUUID?.() ?? prefix + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2)
+}
 
 export function useProgression() {
-  const [data, setData] = useState(emptyProgression)
+  const [library, setLibrary] = useState(emptyLibrary)
   const [hydrated, setHydrated] = useState(false)
   const [storageError, setStorageError] = useState<string | null>(null)
   const canPersist = useRef(false)
   const ready = useRef(false)
+  const active = library.progressions.find(item => item.id === library.activeId) ?? library.progressions[0]
 
   useEffect(() => {
     try {
-      const restored = restoreProgression(window.localStorage.getItem(PROGRESSION_STORAGE_KEY))
-      setData(restored.data)
+      const saved = window.localStorage.getItem(LIBRARY_STORAGE_KEY)
+      const restored = restoreLibrary(saved, saved === null ? window.localStorage.getItem(PROGRESSION_STORAGE_KEY) : null)
+      setLibrary(restored.data)
       canPersist.current = restored.canPersist
       setStorageError(restored.error)
     } catch {
       canPersist.current = false
-      setStorageError('Saving is unavailable in this browser. Your progression will stay in this session.')
+      setStorageError('Saving is unavailable in this browser. Your progressions will stay in this session.')
     }
     ready.current = true
     setHydrated(true)
   }, [])
 
   useEffect(() => {
-    // The initial server-rendered empty list must never replace a saved progression.
+    // Hydrate before writing; leave the original v1 save intact as a migration backup.
     if (!hydrated || !canPersist.current) return
     try {
-      window.localStorage.setItem(PROGRESSION_STORAGE_KEY, JSON.stringify(data))
+      window.localStorage.setItem(LIBRARY_STORAGE_KEY, JSON.stringify(library))
       setStorageError(null)
     } catch {
-      setStorageError('Your latest changes could not be saved. Keep this tab open to keep your progression.')
+      setStorageError('Your latest changes could not be saved. Keep this tab open to keep your progressions.')
     }
-  }, [data, hydrated])
+  }, [library, hydrated])
+
+  const updateCurrent = useCallback((update: (current: SavedProgression) => SavedProgression) => {
+    if (ready.current) setLibrary(previous => updateActiveProgression(previous, update))
+  }, [])
 
   const setTitle = useCallback((title: string) => {
-    if (ready.current) setData(previous => ({ ...previous, title: progressionTitle(title) }))
-  }, [])
+    updateCurrent(previous => ({ ...previous, title: progressionTitle(title) }))
+  }, [updateCurrent])
 
   const addChord = useCallback((root: number, structureId: string, voicingId?: string) => {
-    if (!ready.current) return
-    const id = globalThis.crypto?.randomUUID?.() ?? `chord-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
-    setData(previous => ({ ...previous, entries: addProgressionChord(previous.entries, id, root, structureId, voicingId) }))
-  }, [])
+    const id = newId('chord')
+    updateCurrent(previous => ({ ...previous, entries: addProgressionChord(previous.entries, id, root, structureId, voicingId) }))
+  }, [updateCurrent])
 
   const updateChord = useCallback((id: string, patch: ProgressionPatch) => {
-    if (ready.current) setData(previous => ({ ...previous, entries: updateProgressionChord(previous.entries, id, patch) }))
-  }, [])
+    updateCurrent(previous => ({ ...previous, entries: updateProgressionChord(previous.entries, id, patch) }))
+  }, [updateCurrent])
 
   const removeChord = useCallback((id: string) => {
-    if (ready.current) setData(previous => ({ ...previous, entries: previous.entries.filter(entry => entry.id !== id) }))
-  }, [])
+    updateCurrent(previous => ({ ...previous, entries: previous.entries.filter(entry => entry.id !== id) }))
+  }, [updateCurrent])
 
   const moveChord = useCallback((id: string, direction: -1 | 1) => {
-    if (ready.current) setData(previous => ({ ...previous, entries: moveProgressionChord(previous.entries, id, direction) }))
+    updateCurrent(previous => ({ ...previous, entries: moveProgressionChord(previous.entries, id, direction) }))
+  }, [updateCurrent])
+
+  const create = useCallback(() => {
+    if (!ready.current) return
+    const id = newId('progression')
+    setLibrary(previous => createProgression(previous, id))
   }, [])
 
-  return { title: data.title, setTitle, entries: data.entries, addChord, updateChord, removeChord, moveChord, storageError, hydrated }
+  const select = useCallback((id: string) => {
+    if (ready.current) setLibrary(previous => selectProgression(previous, id))
+  }, [])
+
+  const remove = useCallback((id: string) => {
+    if (ready.current) setLibrary(previous => deleteProgression(previous, id))
+  }, [])
+
+  return {
+    title: active.title, setTitle, entries: active.entries,
+    addChord, updateChord, removeChord, moveChord, storageError, hydrated,
+    progressions: library.progressions, activeId: active.id, create, select, remove,
+  }
 }
