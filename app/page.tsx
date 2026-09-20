@@ -46,7 +46,7 @@ export default function Home() {
   const soundBeforeTuner = useRef(true)
   const audio = usePracticeAudio()
   const progression = useProgression()
-  const viewport = usePracticeViewport()
+  usePracticeViewport()
   const customChords = useCustomChords()
   const [snapshot, setSnapshot] = useState<CustomChord | null>(null)
   const [builder, setBuilder] = useState<BuilderSeed | null>(null)
@@ -214,7 +214,6 @@ export default function Home() {
     <section className="workspace" aria-label="Fretboard explorer">
       <header className="explorer-header">
         <button className="explorer-settings" type="button" onClick={() => openPanel('settings')} aria-label="Open fretboard settings"><Icon name="settings"/><span>{activeCustom?.name ?? rootName + ' ' + structure.name}<small>{instrument.shortName} · {showFingering ? 'Fingering' : 'All notes'}</small></span></button>
-        <button className="icon-button" type="button" onClick={viewport.toggle} aria-label="Toggle portrait and landscape" title="Rotate app">⤾</button>
         <button className="icon-button" type="button" onClick={()=>audio.setSoundEnabled(!audio.soundEnabled)} aria-label={audio.soundEnabled?'Mute note playback':'Enable note playback'} aria-pressed={audio.soundEnabled}><Icon name={audio.soundEnabled?'sound':'muted'}/></button>
         <button className="compact-button" type="button" aria-label={'Progression builder, ' + progression.entries.length + ' chords'} onClick={()=>openPanel('progression')}>Progression</button>
         <button className="icon-button" type="button" aria-label="Open practice tools" onClick={()=>openPanel('tools')}>⋯</button>
@@ -275,7 +274,7 @@ export default function Home() {
     </section>
 
 
-    <PracticeDialog open={panel !== null} wide={panel === 'progression'} onRotate={viewport.toggle} title={panel === 'settings' ? 'Fretboard settings' : panel === 'metronome' ? 'Metronome' : panel === 'progression' ? 'Progression' : panel === 'tools' ? 'Practice tools' : panel === 'mychords' ? 'My chords' : 'Tuner'} onClose={closePanel}>
+    <PracticeDialog open={panel !== null} wide={panel === 'progression'} title={panel === 'settings' ? 'Fretboard settings' : panel === 'metronome' ? 'Metronome' : panel === 'progression' ? 'Progression' : panel === 'tools' ? 'Practice tools' : panel === 'mychords' ? 'My chords' : 'Tuner'} onClose={closePanel}>
       {panel === 'settings' ? <div className="drawer-stack">
         <div className="two-fields"><label>Root<select aria-label="Root note" disabled={!!activeCustom} value={root} onChange={e=>changeRoot(Number(e.target.value))}>{NOTE_NAMES.map((n,i)=><option key={n} value={i}>{displayNote(n)}</option>)}</select></label><label>Explore<select aria-label="Scale or chord" value={structureId} onChange={e=>changeStructure(e.target.value)}>{(['scale','chord'] as const).map(type=><optgroup key={type} label={type==='scale'?'Scales':'Chords'}>{STRUCTURES.filter(s=>s.type===type).map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</optgroup>)}{customChords.chords.length?<optgroup label="My chords">{customChords.chords.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</optgroup>:null}{activeCustom && !customChords.chords.some(c=>c.id===activeCustom.id)?<option value={activeCustom.id}>{activeCustom.name} · saved in progression</option>:null}</select></label></div>
         <fieldset><legend>Instrument</legend><div className="segmented">{INSTRUMENTS.map(item=><button key={item.id} type="button" aria-pressed={instrumentId===item.id} onClick={()=>changeInstrument(item.id)}>{item.shortName}</button>)}</div></fieldset>
@@ -288,7 +287,6 @@ export default function Home() {
         <button type="button" className="secondary-button" onClick={()=>openPanel('tuner')}><Icon name="tuner"/>Tuner</button>
         <button type="button" className="secondary-button" onClick={()=>setPanel('mychords')}>My chords ({customChords.chords.length})</button>
         <button type="button" className="secondary-button" onClick={()=>openBuilder({root})}>Build a chord</button>
-        <p className="field-hint">Rotate changes the app view. Your phone's portrait lock can stay on; browser controls and the keyboard keep their normal orientation.</p>
       </div> : panel === 'mychords' ? <div className="drawer-stack">
         <button type="button" className="primary-button" onClick={()=>openBuilder({root})}>Build a new chord</button>
         {customChords.error?<p className="error-message" role="status">{customChords.error}</p>:null}
@@ -297,7 +295,7 @@ export default function Home() {
       </div> : panel === 'metronome' ? <MetronomePanel audio={audio}/> : panel === 'tuner' ? <TunerPanel/> : panel === 'progression' ? <ProgressionPanel progression={progression} customChords={customChords.chords} onBuild={openBuilder} onShowChord={showEntry} onPlayChord={playEntry} onPlay={playProgression} onStop={audio.stopProgression} playing={audio.progressionRunning} activeEntryId={audio.activeChordId} bpm={audio.bpm} onBpmChange={audio.setBpm}/> : null}
       {audio.audioError && panel==='progression'?<p className="error-message" role="alert">{audio.audioError}</p>:null}
     </PracticeDialog>
-    <PracticeDialog open={builder!==null} wide title="Chord builder" onRotate={viewport.toggle} onClose={()=>setBuilder(null)}>
+    <PracticeDialog open={builder!==null} wide title="Chord builder" onClose={()=>setBuilder(null)}>
       {builder?<><ChordBuilder seed={builder} saveLabel={panel === 'progression' ? builder.targetEntryId ? 'Save & replace chord' : 'Save & add chord' : undefined} onSave={saveCustom} onPlay={notes=>{audio.setSoundEnabled(true);audio.playChord(notes,'guitar')}} ready={customChords.hydrated}/>{customChords.error?<p className="error-message" role="status">{customChords.error}</p>:null}</>:null}
     </PracticeDialog>
   </main></div>

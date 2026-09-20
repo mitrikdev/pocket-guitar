@@ -1,5 +1,11 @@
 # Verification
 
+## Native orientation restored — September 20, 2026
+
+- Removed rotation buttons from the explorer and all panels, the forced CSS rotation, and the saved orientation mode. The obsolete orientation preference is cleared without changing custom chords or progressions.
+- TypeScript and the production build pass. Browser checks at 440 × 760 and 956 × 360 confirmed normal viewport dimensions, no horizontal overflow, working root/chord selectors, unrotated drawers, and unchanged saved music data after refresh.
+- Supersedes the app-rotation feature described in the earlier update below; the app now follows the browser’s native orientation.
+
 ## Drawers, rotation, and custom chords — September 20, 2026
 
 - Expanded to 20 chord types and 521 guitar fingerings across all 12 roots. All 56 tests pass, including exact pitch sets, omissions, finger/barre consistency, E6 recognition, custom storage validation, and immutable progression snapshots. TypeScript and the production export pass.

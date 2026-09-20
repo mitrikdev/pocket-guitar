@@ -38,7 +38,7 @@ The project uses the Next.js preset, Node.js 24, and `npm run build` to produce 
 - Tap any position, including unhighlighted positions and open strings, to see its note and relationship to the root and hear its pitch. Use the sound toggle for silent practice.
 - In scales and the All tones chord view, roots are amber and carry a small identifying dot. The selected position has an outer ring. Guitar fingering view uses finger numbers and colors instead.
 - Instrument changes preserve the musical settings and clear the selected position. Moving the range keeps selected notes while they remain visible and clears them when they leave view. Root and structure changes clear the selected position.
-- Tap the rotation arrow to switch the app between portrait and landscape, even with iPhone portrait lock enabled. The view preference is saved. This rotates the app surface; browser controls, native select menus, permission prompts, and the keyboard retain the device orientation. Layout height follows the visible viewport.
+- The app follows the browser’s normal portrait or landscape orientation. Layout height follows the visible viewport as browser controls and the keyboard change size.
 - With a keyboard, Tab enters the fretboard once. Arrow keys move between visible positions; Home/End move to the visible endpoints; Enter or Space selects. The slider supports arrows and Home/End. Escape closes a tool or Settings and restores focus to its opener.
 
 ## Chord fingerings and progressions
@@ -71,8 +71,8 @@ Opening the tuner pauses the metronome and temporarily mutes note playback. Clos
 
 `lib/music.ts` keeps tuning and interval data separate from presentation. Tunings are stored low to high and rendered high to low. Note names consistently use sharps; contextual enharmonic spelling is deferred. Degrees and interval names follow each structure's musical role. “Minor blues” uses the diminished fifth, and “Diminished” means the diminished triad. Nonmember tritones are labelled “Tritone.”
 
-Seven scales and 20 chord types are included. Guitar chords offer playable fingerings and an All tones view. General explorer and audio settings do not persist between visits; orientation, custom shapes, and the progression library do.
+Seven scales and 20 chord types are included. Guitar chords offer playable fingerings and an All tones view. General explorer and audio settings do not persist between visits; custom shapes and the progression library do.
 
 Progressive-enhancement WebMCP tools expose configuration, position selection, and fret range changes when supported. They do not affect ordinary browser use or request microphone access.
 
-The original specification remains in `guitar-fretboard-learning-tool-v0.1.md`. Later requests expanded the neck to 24 frets and added phone layout improvements, audio practice tools, common guitar fingerings, custom chord editing, app rotation, and a progression library. See `VERIFICATION.md` for checks and remaining device verification.
+The original specification remains in `guitar-fretboard-learning-tool-v0.1.md`. Later requests expanded the neck to 24 frets and added phone layout improvements, audio practice tools, common guitar fingerings, custom chord editing, compact drawer controls, and a progression library. See `VERIFICATION.md` for checks and remaining device verification.

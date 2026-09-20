@@ -1,8 +1,8 @@
 'use client'
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 
-export function PracticeDialog({ open, title, onClose, children, wide = false, onRotate }: {
-  open: boolean; wide?: boolean; title: string; onClose: () => void; children: ReactNode; onRotate?: () => void
+export function PracticeDialog({ open, title, onClose, children, wide = false }: {
+  open: boolean; wide?: boolean; title: string; onClose: () => void; children: ReactNode
 }) {
   const ref = useRef<HTMLDialogElement>(null)
   const headingId = useId()
@@ -15,7 +15,7 @@ export function PracticeDialog({ open, title, onClose, children, wide = false, o
     <div className="dialog-plane">
       <div className="drawer-scrim" onClick={onClose} aria-hidden="true"/>
       <section className={'dialog-inner ' + (wide ? 'full-panel' : 'drawer-panel')}>
-        <header className="dialog-heading"><h2 id={headingId}>{title}</h2>{onRotate ? <button type="button" className="icon-button" aria-label="Toggle portrait and landscape" onClick={onRotate}>⤾</button> : null}<button type="button" className="icon-button" aria-label="Close panel" onClick={onClose}>✕</button></header>
+        <header className="dialog-heading"><h2 id={headingId}>{title}</h2><button type="button" className="icon-button" aria-label="Close panel" onClick={onClose}>✕</button></header>
         <div className="dialog-body">{children}</div>
       </section>
     </div>
