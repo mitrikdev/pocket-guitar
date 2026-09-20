@@ -31,6 +31,15 @@ const movable = (root: number, structureId: string, id: string, name: string, fr
 // Suspensions replace the third; diminished here means a triad, never dim7 or m7b5.
 // Remaining variants are derived from these grips and checked against independent pitch sets.
 const OPEN_SHAPES: readonly OpenShape[] = [
+  open(4,'major-6','open-e6',[0,2,2,1,2,0],[0,2,3,1,4,0]),
+  open(9,'major-6','open-a6',[null,0,2,2,2,2],[null,0,1,1,1,1],[barre(2,4,1)]),
+  open(4,'minor-6','open-em6',[0,2,2,0,2,0],[0,1,2,0,3,0]),
+  open(9,'minor-6','open-am6',[null,0,2,2,1,2],[null,0,2,3,1,4]),
+  open(0,'add9','open-cadd9',[null,3,2,0,3,3],[null,2,1,0,3,4]),
+  open(4,'add9','open-eadd9',[0,2,4,1,0,0],[0,2,4,1,0,0]),
+  open(9,'add9','open-aadd9',[null,0,2,4,2,0],[null,0,1,3,2,0]),
+  open(4,'dominant-9','open-e9',[0,2,0,1,0,2],[0,2,0,1,0,3]),
+  open(4,'minor-9','open-em9',[0,2,0,0,0,2],[0,1,0,0,0,2]),
   open(0, 'major-chord', 'open-c', [null, 3, 2, 0, 1, 0], [null, 3, 2, 0, 1, 0]),
   open(5, 'major-chord', 'compact-f', [null, null, 3, 2, 1, 1], [null, null, 3, 2, 1, 1], [barre(1, 2, 1)], 'Compact F · four strings'),
   open(9, 'major-chord', 'open-a', [null, 0, 2, 2, 2, 0], [null, 0, 1, 2, 3, 0]),
@@ -69,6 +78,28 @@ const OPEN_SHAPES: readonly OpenShape[] = [
 // movable template is fretted by the indicated finger, not played as an open string.
 // Prefer compact triads to impractical six-string diminished/augmented stretches.
 const MOVABLE_SHAPES: readonly MovableShape[] = [
+  { ...movable(4,'major-6','e-six','E-string sixth',[0,null,2,1,2,null],[1,null,3,2,4,null]), omittedIntervals:[7] },
+  movable(9,'major-6','a-six','A-shape sixth',[null,0,2,2,2,2],[null,1,3,3,3,3],[barre(2,4,1,3)]),
+  { ...movable(4,'minor-6','e-minor-six','E-string minor sixth',[0,null,2,0,2,null],[1,null,3,1,4,null],[barre(0,6,3)]), omittedIntervals:[7] },
+  movable(9,'minor-6','a-minor-six','A-shape minor sixth',[null,0,2,2,1,2],[null,1,3,3,2,4],[barre(2,4,3,3)]),
+  movable(9,'add9','c-add-nine','C-shape add9',[null,0,-1,-3,0,null],[null,3,2,1,4,null]),
+  movable(4,'add9','e-add-nine','E-shape add9',[0,2,4,1,0,0],[1,3,4,2,1,1],[barre(0,6,1)]),
+  movable(9,'dominant-9','a-nine','A-string ninth',[null,0,-1,0,0,0],[null,2,1,3,3,3],[barre(0,3,1,3)]),
+  movable(4,'dominant-9','e-nine','E-string ninth',[0,null,0,1,0,2],[1,null,1,2,1,3],[barre(0,6,2)]),
+  { ...movable(9,'major-9','a-major-nine','A-string major ninth',[null,0,-1,1,0,null],[null,2,1,4,3,null]), omittedIntervals:[7] },
+  movable(4,'major-9','e-major-nine','E-string major ninth',[0,null,1,1,0,2],[1,null,2,2,1,4],[barre(0,6,2),barre(1,4,3,2)]),
+  movable(9,'minor-9','a-minor-nine','A-string minor ninth',[null,0,-2,0,0,0],[null,2,1,3,3,3],[barre(0,3,1,3)]),
+  movable(4,'minor-9','e-minor-nine','E-shape minor ninth',[0,2,0,0,0,2],[1,3,1,1,1,4],[barre(0,6,2)]),
+  movable(9,'diminished-7','a-dim-seven','A-string diminished seventh',[null,0,1,-1,1,null],[null,2,3,1,4,null]),
+  movable(4,'diminished-7','e-dim-seven','E-string diminished seventh',[0,null,-1,0,-1,null],[2,null,1,3,1,null],[barre(-1,4,2)]),
+  movable(9,'half-diminished','a-half-dim','A-string half-diminished',[null,0,1,0,1,null],[null,1,3,2,4,null]),
+  movable(4,'half-diminished','e-half-dim','E-string half-diminished',[0,null,0,0,-1,null],[2,null,3,4,1,null]),
+  movable(9,'7sus4','a-seven-sus','A-shape suspended seventh',[null,0,2,0,3,0],[null,1,3,1,4,1],[barre(0,5,1)]),
+  movable(4,'7sus4','e-seven-sus','E-shape suspended seventh',[0,2,0,2,0,0],[1,3,1,4,1,1],[barre(0,6,1)]),
+  { ...movable(9,'dominant-11','a-eleven','A-string eleventh',[null,0,0,0,0,0],[null,1,1,1,1,1],[barre(0,5,1)]), omittedIntervals:[4] },
+  { ...movable(4,'dominant-11','e-eleven','E-string eleventh',[0,null,0,2,0,2],[1,null,1,3,1,4],[barre(0,6,2)]), omittedIntervals:[4] },
+  { ...movable(9,'dominant-13','a-thirteen','A-string thirteenth',[null,0,2,0,2,2],[null,1,3,1,4,4],[barre(0,5,3),barre(2,2,1,4)]), omittedIntervals:[2,5] },
+  { ...movable(4,'dominant-13','e-thirteen','E-string thirteenth',[0,null,0,1,2,2],[1,null,1,2,3,3],[barre(0,6,4),barre(2,2,1,3)]), omittedIntervals:[7,5] },
   movable(4, 'major-chord', 'e-major', 'E-shape barre', [0, 2, 2, 1, 0, 0], [1, 3, 4, 2, 1, 1], [barre(0, 6, 1)]),
   movable(9, 'major-chord', 'a-major', 'A-shape partial barre', [null, 0, 2, 2, 2, null], [null, 1, 3, 3, 3, null], [barre(2, 4, 2, 3)]),
   movable(4, 'minor-chord', 'e-minor', 'E-shape barre', [0, 2, 2, 0, 0, 0], [1, 3, 4, 1, 1, 1], [barre(0, 6, 1)]),
@@ -91,6 +122,7 @@ const MOVABLE_SHAPES: readonly MovableShape[] = [
 
 const SUFFIXES: Readonly<Record<string, string>> = {
   'major-chord': '', 'minor-chord': 'm', 'major-7': 'maj7', 'minor-7': 'm7',
+  'major-6': '6', 'minor-6': 'm6', add9: 'add9', 'dominant-9': '9', 'major-9': 'maj9', 'minor-9': 'm9', 'diminished-7': 'dim7', 'half-diminished': 'm7♭5', '7sus4': '7sus4', 'dominant-11': '11', 'dominant-13': '13',
   'dominant-7': '7', sus2: 'sus2', sus4: 'sus4', diminished: 'dim', augmented: 'aug',
 }
 const OPEN_MIDI = [40, 45, 50, 55, 59, 64] as const
@@ -108,12 +140,15 @@ export function getChordVoicings(root: number, structureId: string): ChordVoicin
   const movableShapes = MOVABLE_SHAPES.filter(shape => shape.structureId === structureId).map(shape => {
     // An open root at fret zero has a separately curated grip. Its closed version
     // starts at fret twelve, so transposition never accidentally introduces opens.
-    const base = mod12(pitchClass - shape.root) || 12
+    let base = mod12(pitchClass - shape.root) || 12
+    const lowest = Math.min(...shape.frets.filter((fret): fret is number => fret !== null))
+    while (base + lowest < 1) base += 12
     return {
       id: `${shape.id}-${base}`,
       name: `${shape.name} · fret ${base}`,
       frets: shape.frets.map(fret => fret === null ? null : fret + base) as unknown as ChordVoicing['frets'],
       fingers: shape.fingers,
+      omittedIntervals: shape.omittedIntervals,
       barres: shape.barres.map(item => ({ ...item, fret: item.fret + base })),
     }
   }).sort((a, b) => Math.min(...a.frets.filter((fret): fret is number => fret !== null)) - Math.min(...b.frets.filter((fret): fret is number => fret !== null)))

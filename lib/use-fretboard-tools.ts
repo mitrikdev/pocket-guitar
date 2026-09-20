@@ -2,9 +2,9 @@
 
 import { useEffect, useRef } from 'react'
 import { flushSync } from 'react-dom'
-import { INSTRUMENTS, NOTE_NAMES, STRUCTURES, MAX_FRET, activeNotes, generateFretboard, getFretWindow, relationship, type DisplayMode, type InstrumentId } from './music'
+import { INSTRUMENTS, NOTE_NAMES, STRUCTURES, MAX_FRET, activeNotes, generateFretboard, getFretWindow, relationship, type Structure, type DisplayMode, type InstrumentId } from './music'
 
-type State = { instrumentId: InstrumentId; root: number; structureId: string; mode: DisplayMode; selected: { stringIndex: number; fret: number } | null; firstFret: number; windowSpan: number }
+type State = { structureOverride?: Structure; instrumentId: InstrumentId; root: number; structureId: string; mode: DisplayMode; selected: { stringIndex: number; fret: number } | null; firstFret: number; windowSpan: number }
 type Actions = {
   setInstrument: (id: InstrumentId) => void
   setRoot: (root: number) => void
@@ -34,7 +34,7 @@ export function useFretboardTools(state: State, actions: Actions) {
     const span = getFretWindow(0, state.windowSpan).end
     const readState = () => {
       const value = current.current.state
-      const selectedStructure = STRUCTURES.find(item => item.id === value.structureId)!
+      const selectedStructure = value.structureOverride ?? STRUCTURES.find(item => item.id === value.structureId)!
       const window = getFretWindow(value.firstFret, value.windowSpan)
       return { instrument: value.instrumentId, root: NOTE_NAMES[value.root], structureId: value.structureId, displayMode: value.mode, notes: activeNotes(value.root, selectedStructure).map(item => NOTE_NAMES[item.pitchClass]), selectedPosition: value.selected, visibleFrets: { from: window.start, to: window.end } }
     }
@@ -71,7 +71,7 @@ export function useFretboardTools(state: State, actions: Actions) {
         const selected = { stringIndex: Number(args.stringNumber) - 1, fret: Number(args.fret) }
         flushSync(() => current.current.actions.setPosition(selected))
         const cell = generateFretboard(instrument)[selected.stringIndex][selected.fret]
-        const result = relationship(cell.pitchClass, state.root, STRUCTURES.find(item => item.id === state.structureId)!)
+        const result = relationship(cell.pitchClass, state.root, state.structureOverride ?? STRUCTURES.find(item => item.id === state.structureId)!)
         return { ...readState(), note: cell.note, octave: cell.octave, interval: result.interval.name, isMember: result.isMember }
       },
     }, {

@@ -1,5 +1,16 @@
 # Verification
 
+## Drawers, rotation, and custom chords — September 20, 2026
+
+- Expanded to 20 chord types and 521 guitar fingerings across all 12 roots. All 56 tests pass, including exact pitch sets, omissions, finger/barre consistency, E6 recognition, custom storage validation, and immutable progression snapshots. TypeScript and the production export pass.
+- Browser flows created E6 from an E major grip, named and saved it, added it to a progression, and restored both after refresh. Editing its library copy did not change the progression's diagram, playback pitches, or Show on neck result.
+- Built and saved an F barre using the fret/finger/barre controls. Created a second progression, cancelled deletion, switched songs, and restored the selected song after refresh. Existing v1/v2 progression migration tests still pass.
+- The app rotation button and rotated drawers were exercised at a physical viewport of 440 × 760; the surface stays inside the viewport, touch hit targets work in the automated browser, and the orientation preference survives reload. Escape closes only the top drawer and restores focus.
+- Portrait now displays eight diagrams together in a three-column grid at 440 × 760. Landscape 956 × 360 and 830 × 320, simulated rotated landscape, and desktop 1440 × 900 retain compact controls and scrollable diagrams without page overflow.
+- Accessibility checks report zero violations for the explorer (34 checks passed), progression (25), and builder (29). Contrast remains incomplete for layered graphics.
+- Audio instrumentation verified the custom E6 pitches [40, 47, 52, 56, 61, 64], progression play/stop, chord edits and reordering, metronome clicks, and synthetic A440 tuner detection. Closing the tuner released its microphone track. No browser errors were observed.
+- Browser automation uses desktop Chromium, not physical iPhone hardware. Portrait lock stays enabled because rotation is applied to the app surface; native browser controls, select menus, permission prompts, and keyboard keep the device orientation. Actual iPhone touch, safe areas, and keyboard behavior still need a device check.
+
 ## Multiple saved progressions — September 18, 2026
 
 - All 50 tests pass, including nine library tests for migration, independent titles/chords/fingerings, active selection, create/delete, valid fallback, and malformed or future storage preservation. TypeScript and the production build pass.

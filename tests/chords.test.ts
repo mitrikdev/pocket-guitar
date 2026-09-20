@@ -7,6 +7,7 @@ import { chordLabel, getChordVoicings, voicingMidi, voicingWindow } from '../lib
 const CHORD_INTERVALS: Record<string, readonly number[]> = {
   'major-chord': [0, 4, 7], 'minor-chord': [0, 3, 7], 'major-7': [0, 4, 7, 11],
   'minor-7': [0, 3, 7, 10], 'dominant-7': [0, 4, 7, 10],
+  'major-6':[0,4,7,9], 'minor-6':[0,3,7,9], add9:[0,4,7,2], 'dominant-9':[0,4,7,10,2], 'major-9':[0,4,7,11,2], 'minor-9':[0,3,7,10,2], 'diminished-7':[0,3,6,9], 'half-diminished':[0,3,6,10], '7sus4':[0,5,7,10], 'dominant-11':[0,4,7,10,2,5], 'dominant-13':[0,4,7,10,2,5,9],
   sus2: [0, 2, 7], sus4: [0, 5, 7], diminished: [0, 3, 6], augmented: [0, 4, 8],
 }
 const pitchSet = (values: number[]) => [...new Set(values.map(value => value % 12))].sort((a, b) => a - b)
@@ -68,8 +69,9 @@ test('every root and chord type offers multiple distinct, valid voicings', () =>
       for (const shape of shapes) {
         const omitted = shape.omittedIntervals ?? []
         if (omitted.length) {
-          assert.equal(shape.id, 'open-c7', 'Only explicitly curated C7 may omit a tone')
-          assert.deepEqual(omitted, [7], 'Never omit the root, defining third, or seventh')
+          const allowed: Record<string, number[]> = { 'dominant-7':[7], 'major-6':[7], 'minor-6':[7], 'major-9':[7], 'dominant-11':[4], 'dominant-13':[2,5,7] }
+          assert.ok(omitted.every(n => allowed[structureId]?.includes(n)), 'Only conventional nonessential omissions are allowed')
+          assert.ok(!omitted.includes(0), 'Root cannot be omitted')
         }
         assert.deepEqual(pitchSet(voicingMidi(shape)), pitchSet(intervals.filter(interval => !omitted.includes(interval)).map(interval => root + interval)), `${root} ${structureId} ${shape.id}`)
         assert.equal(voicingMidi(shape)[0] % 12, root, `${shape.id} must keep its named root in the bass`)
@@ -81,12 +83,12 @@ test('every root and chord type offers multiple distinct, valid voicings', () =>
   }
 })
 
-test('all grips use at most four frets and consistent finger, open, mute, and barre metadata', () => {
+test('grips use compact spans (with an explicit add9 stretch) and consistent finger, open, mute, and barre metadata', () => {
   for (let root = 0; root < 12; root++) {
     for (const structureId of Object.keys(CHORD_INTERVALS)) {
       for (const shape of getChordVoicings(root, structureId)) {
         const pressed = shape.frets.filter((fret): fret is number => fret !== null && fret > 0)
-        assert.ok(Math.max(...pressed) - Math.min(...pressed) <= 3, `${shape.id} spans more than four frets`)
+        assert.ok(Math.max(...pressed) - Math.min(...pressed) <= (shape.id.startsWith('e-add-nine') ? 4 : 3), `${shape.id} spans more than four frets`)
         shape.frets.forEach((fret, index) => {
           const finger = shape.fingers[index]
           if (fret === null) assert.equal(finger, null, `${shape.id} mute`)

@@ -1,4 +1,5 @@
-import { getChordVoicings } from './chords.ts'
+import { sanitizeCustomChord, type CustomChord } from './custom-chords.ts'
+import { chordLabel, getChordVoicings } from './chords.ts'
 
 export const PROGRESSION_STORAGE_KEY = 'pocket-guitar.progression.v1'
 export const MAX_PROGRESSION_CHORDS = 24
@@ -9,6 +10,7 @@ export type ProgressionEntry = {
   root: number
   structureId: string
   voicingId: string
+  custom?: CustomChord
 }
 
 export type Progression = {
@@ -31,7 +33,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-function chordEntry(id: string, root: unknown, structureId: unknown, voicingId?: unknown): ProgressionEntry | null {
+function chordEntry(id: string, root: unknown, structureId: unknown, voicingId?: unknown, custom?: unknown): ProgressionEntry | null {
+  if (custom !== undefined) {
+    const saved = sanitizeCustomChord(custom)
+    return saved ? { id, root: saved.root, structureId: saved.id, voicingId: saved.id, custom: saved } : null
+  }
   if (typeof root !== 'number' || !Number.isInteger(root) || root < 0 || root > 11 || typeof structureId !== 'string') return null
   const voicings = getChordVoicings(root, structureId)
   if (!voicings.length) return null
@@ -56,7 +62,7 @@ export function sanitizeProgression(value: unknown): Progression | null {
     let id = baseId
     let suffix = 2
     while (ids.has(id)) id = `${baseId.slice(0, 76)}-${suffix++}`
-    const entry = chordEntry(id, candidate.root, candidate.structureId, candidate.voicingId)
+    const entry = chordEntry(id, candidate.root, candidate.structureId, candidate.voicingId, candidate.custom)
     if (entry) {
       ids.add(id)
       entries.push(entry)
@@ -105,4 +111,12 @@ export function moveProgressionChord(entries: ProgressionEntry[], id: string, di
   const next = [...entries]
   ;[next[index], next[destination]] = [next[destination], next[index]]
   return next
+}
+
+export function entryVoicing(entry: ProgressionEntry) {
+  return entry.custom?.voicing ?? (getChordVoicings(entry.root, entry.structureId).find(v => v.id === entry.voicingId) ?? getChordVoicings(entry.root, entry.structureId)[0])
+}
+
+export function entryLabel(entry: ProgressionEntry) {
+  return entry.custom?.name ?? chordLabel(entry.root, entry.structureId)
 }

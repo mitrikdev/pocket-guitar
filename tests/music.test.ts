@@ -30,7 +30,7 @@ test('standard tunings, string order, and all open/fretted pitches are correct',
 
 test('every root and structure highlights the complete neck including open and octave notes', () => {
   assert.equal(STRUCTURES.filter(item => item.type === 'scale').length, 7)
-  assert.equal(STRUCTURES.filter(item => item.type === 'chord').length, 9)
+  assert.equal(STRUCTURES.filter(item => item.type === 'chord').length, 20)
   for (let root = 0; root < 12; root++) {
     for (const structure of STRUCTURES) {
       const members = new Set(activeNotes(root, structure).map(item => item.pitchClass))

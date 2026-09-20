@@ -1,4 +1,5 @@
 'use client'
+import type { CustomChord } from './custom-chords'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
@@ -62,6 +63,15 @@ export function useProgression() {
     updateCurrent(previous => ({ ...previous, entries: addProgressionChord(previous.entries, id, root, structureId, voicingId) }))
   }, [updateCurrent])
 
+  const addCustom = useCallback((chord: CustomChord) => {
+    const id = newId('chord')
+    updateCurrent(previous => previous.entries.length >= 24 ? previous : ({ ...previous, entries: [...previous.entries, { id, root: chord.root, structureId: chord.id, voicingId: chord.id, custom: chord }] }))
+  }, [updateCurrent])
+
+  const replaceCustom = useCallback((id: string, chord: CustomChord) => {
+    updateCurrent(previous => ({ ...previous, entries: previous.entries.map(e => e.id === id ? { id, root: chord.root, structureId: chord.id, voicingId: chord.id, custom: chord } : e) }))
+  }, [updateCurrent])
+
   const updateChord = useCallback((id: string, patch: ProgressionPatch) => {
     updateCurrent(previous => ({ ...previous, entries: updateProgressionChord(previous.entries, id, patch) }))
   }, [updateCurrent])
@@ -90,7 +100,7 @@ export function useProgression() {
 
   return {
     title: active.title, setTitle, entries: active.entries,
-    addChord, updateChord, removeChord, moveChord, storageError, hydrated,
+    addChord, addCustom, replaceCustom, updateChord, removeChord, moveChord, storageError, hydrated,
     progressions: library.progressions, activeId: active.id, create, select, remove,
   }
 }
